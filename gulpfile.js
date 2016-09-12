@@ -1,6 +1,7 @@
-const gulp  = require('gulp');
-const jscs  = require('gulp-jscs');
-const mocha = require('gulp-mocha');
+const gulp     = require('gulp');
+const jscs     = require('gulp-jscs');
+const mocha    = require('gulp-mocha');
+const istanbul = require('gulp-istanbul');
 
 const lint = () => {
 	return gulp.src(['src/**/*'])
@@ -11,8 +12,12 @@ const lint = () => {
 };
 
 const test = () => {
-	gulp.src(['src/*.test.js', 'src/**/*.test.js'])
-        .pipe(mocha())
+	gulp.src([
+			'src/*.test.js',
+			'src/**/*.test.js'
+		]).pipe(mocha())
+        .pipe(istanbul.writeReports())
+        .pipe(istanbul.enforceThresholds({'thresholds' : {'global' : 100}}))
         .once('error', () => {
 			process.exit(1);
         })
@@ -21,6 +26,17 @@ const test = () => {
         });
 };
 
+const preTest = () => {
+	return gulp.src([
+			'!src/*.test.js',
+			'!src/**/*.test.js',
+			'src/*.js',
+			'src/**/*.js'
+		]).pipe(istanbul())
+		.pipe(istanbul.hookRequire());
+};
+
+gulp.task('pre-test', preTest);
 gulp.task('lint', lint);
-gulp.task('test', test);
-gulp.task('pre-commit', ['lint', 'test']);
+gulp.task('test', ['pre-test'], test);
+gulp.task('pre-commit', ['lint', 'test', 'pre-test']);
