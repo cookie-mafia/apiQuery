@@ -4,36 +4,36 @@ const mocha    = require('gulp-mocha');
 const istanbul = require('gulp-istanbul');
 
 const lint = () => {
-	return gulp.src(['src/**/*'])
-		.pipe(jscs({'fix' : true}))
-		.pipe(jscs.reporter())
-		.pipe(jscs.reporter('fail'))
-		.pipe(gulp.dest('src'));
+  return gulp.src(['src/**/*'])
+    .pipe(jscs({'fix': true}))
+    .pipe(jscs.reporter())
+    .pipe(jscs.reporter('fail'))
+    .pipe(gulp.dest('src'));
 };
 
 const test = () => {
-	gulp.src([
-			'src/*.test.js',
-			'src/**/*.test.js'
-		]).pipe(mocha())
-        .pipe(istanbul.writeReports())
-        .pipe(istanbul.enforceThresholds({'thresholds' : {'global' : 100}}))
-        .once('error', () => {
-			process.exit(1);
-        })
-        .once('end', () => {
-            process.exit();
-        });
+  gulp.src([
+        'src/*.test.js',
+        'src/**/*.test.js'
+    ]).pipe(mocha())
+    .pipe(istanbul.writeReports())
+    .pipe(istanbul.enforceThresholds({'thresholds': {'global': 100}}))
+    .once('error', () => {
+      process.exit(1);
+    })
+    .once('end', () => {
+      process.exit();
+    });
 };
 
 const preTest = () => {
-	return gulp.src([
-			'!src/*.test.js',
-			'!src/**/*.test.js',
-			'src/*.js',
-			'src/**/*.js'
-		]).pipe(istanbul())
-		.pipe(istanbul.hookRequire());
+  return gulp.src([
+        '!src/*.test.js',
+        '!src/**/*.test.js',
+        'src/*.js',
+        'src/**/*.js'
+    ]).pipe(istanbul())
+    .pipe(istanbul.hookRequire());
 };
 
 gulp.task('pre-test', preTest);

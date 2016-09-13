@@ -1,11 +1,11 @@
 'use strict';
 
-require( 'should' );
+require('should');
 
-const apiQuery = require( './index.js' );
+const apiQuery = require('./index.js');
 
-describe( 'attributes', () => {
-	it( 'version check', () => {
-		apiQuery.should.have.property('version');
-	} );
-} );
+describe('attributes', () => {
+  it('version check', () => {
+    apiQuery.should.have.property('version');
+  });
+});
