@@ -5,10 +5,13 @@
   "main": "index.js",
   "dependencies": {},
   "devDependencies": {
+    "codacy-coverage": "^2.0.0",
     "gulp": "^3.9.1",
+    "gulp-codacy": "^1.0.0",
     "gulp-istanbul": "^1.1.1",
     "gulp-jscs": "^4.0.0",
     "gulp-mocha": "^3.0.1",
+    "mocha-lcov-reporter": "^1.2.0",
     "should": "^11.1.0"
   },
   "scripts": {

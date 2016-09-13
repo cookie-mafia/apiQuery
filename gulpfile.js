@@ -2,6 +2,7 @@ const gulp     = require('gulp');
 const jscs     = require('gulp-jscs');
 const mocha    = require('gulp-mocha');
 const istanbul = require('gulp-istanbul');
+const codacy   = require('gulp-codacy');
 
 const lint = () => {
   return gulp.src(['src/**/*'])
@@ -36,6 +37,14 @@ const preTest = () => {
     .pipe(istanbul.hookRequire());
 };
 
+const codacyTask = () => {
+  return gulp
+    .src(['./coverage/lcov.info'], {'read': false})
+    .pipe(codacy({'token': ''}))
+  ;
+};
+
+gulp.task('codacy', codacyTask);
 gulp.task('pre-test', preTest);
 gulp.task('lint', lint);
 gulp.task('test', ['pre-test'], test);
