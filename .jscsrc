@@ -14,7 +14,7 @@
         "allExcept": ["var_args"]
     },
     "maximumLineLength": {
-      "value": 80,
+      "value": 160,
       "allExcept": ["comments", "regex"]
     },
     "validateIndentation": 2,

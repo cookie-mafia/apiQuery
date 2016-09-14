@@ -19,16 +19,16 @@ function setAllowedOperators(operators) {
 }
 
 function getActionProvider(options) {
-  return options && options.overrideActionProvider ||
+  return options && options.actionProvider ||
     this.actions || defaultActions;
 }
 
 function getAllowedOperators(options) {
-  return options && options.overrideOperators ||
+  return options && options.operators ||
     this.allowedOperators || defaultOperators;
 }
 
-function start(options) {
+function start(baseQuery, reqUrlParams, options) {
   let actions   = this.getActionProvider(options);
   let operators = this.getAllowedOperators(options);
 
@@ -40,7 +40,9 @@ function start(options) {
     return optr(baseQuery);
   }
 
-  this.operators.filter(removeUnusedOptrs).reduce(executeEachOptr, {});
+  this.operators.filter(removeUnusedOptrs).reduce(executeEachOptr, {
+    actions, baseQuery, reqUrlParams
+  });
 
   return actions.execute();
 }
@@ -53,8 +55,29 @@ function preSort(baseQuery) {
   return baseQuery;
 }
 
-function preBatch(baseQuery) {
-  return baseQuery;
+function getValue(base, attrib, def) {
+  return base[attrib] || def;
+}
+
+function preBatch(pack) {
+  const limitTxt  = 'limit';
+  const offsetTxt = 'offset';
+
+  function checkIfKeyIsPresent(key) {
+    return key in pack.reqUrlParams;
+  }
+
+  function performBatch() {
+    pack.baseQuery = pack.actions.doBatch(
+      pack.baseQuery,
+      getValue(pack.reqUrlParams, offsetTxt, 0),
+      getValue(pack.reqUrlParams, limitTxt, 0)
+    );
+    return true;
+  }
+
+  [limitTxt, offsetTxt].filter(checkIfKeyIsPresent).some(performBatch);
+  return pack;
 }
 
 module.exports = {
