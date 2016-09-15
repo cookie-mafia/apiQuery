@@ -62,90 +62,145 @@ describe('methods', () => {
 });
 
 describe('actions', () => {
-  it('should not be able to extract limits and offset from request url params when batch is not included in allowed operators even when present', () => {
-    let limit          = 0;
-    let offset         = 0;
-    let actionProvider = {
-      'doBatch': (bq, limitParam, offsetParam) => {
-        limit  = limitParam;
-        offset = offsetParam;
-      },
-      'execute': () => {}
-    };
+  describe('batch', () => {
+    it('should not be able to extract limits and offset from request url params when batch is not included in allowed operators even when present', () => {
+      let limit          = 0;
+      let offset         = 0;
+      let actionProvider = {
+        'doBatch': (bq, limitParam, offsetParam) => {
+          limit  = limitParam;
+          offset = offsetParam;
+        },
+        'execute': () => {}
+      };
 
-    apiQuery.setAllowedOperators([]);
-    apiQuery.setActionProvider(actionProvider);
-    apiQuery.start('', {'limit': 25, 'offset': 24});
-    limit.should.equal(0);
-    offset.should.equal(0);
+      apiQuery.setAllowedOperators([]);
+      apiQuery.setActionProvider(actionProvider);
+      apiQuery.start('', {'limit': 25, 'offset': 24});
+      limit.should.equal(0);
+      offset.should.equal(0);
+    });
+
+    it('should not be able to trigger batch action when batch is included in allowed operators but params has no limit or offset', () => {
+      let callCount      = 0;
+      let actionProvider = {
+        'doBatch': () => {
+          callCount += 1;
+        },
+        'execute': () => {}
+      };
+
+      apiQuery.setAllowedOperators([apiQuery.optr.BATCH]);
+      apiQuery.setActionProvider(actionProvider);
+      apiQuery.start('', {});
+      callCount.should.equal(0);
+    });
+
+    it('should be able to extract limits and offset from request url params when batch is included in allowed operators when present', () => {
+      let limit          = 0;
+      let offset         = 0;
+      let actionProvider = {
+        'doBatch': (bq, offsetParam, limitParam) => {
+          limit  = limitParam;
+          offset = offsetParam;
+        },
+        'execute': () => {}
+      };
+
+      apiQuery.setAllowedOperators([apiQuery.optr.BATCH]);
+      apiQuery.setActionProvider(actionProvider);
+      apiQuery.start('', {'limit': 25, 'offset': 24});
+      limit.should.equal(25);
+      offset.should.equal(24);
+    });
+
+    it('should be able to extract limits from request url params and provide default value to offset', () => {
+      let limit          = 0;
+      let offset         = 24;
+      let actionProvider = {
+        'doBatch': (bq, offsetParam, limitParam) => {
+          limit  = limitParam;
+          offset = offsetParam;
+        },
+        'execute': () => {}
+      };
+
+      apiQuery.setAllowedOperators([apiQuery.optr.BATCH]);
+      apiQuery.setActionProvider(actionProvider);
+      apiQuery.start('', {'limit': 25});
+      limit.should.equal(25);
+      offset.should.equal(0);
+    });
+
+    it('should be able to extract offset from request url params and provide default value to limit', () => {
+      let limit          = 25;
+      let offset         = 0;
+      let actionProvider = {
+        'doBatch': (bq, offsetParam, limitParam) => {
+          limit  = limitParam;
+          offset = offsetParam;
+        },
+        'execute': () => {}
+      };
+
+      apiQuery.setAllowedOperators([apiQuery.optr.BATCH]);
+      apiQuery.setActionProvider(actionProvider);
+      apiQuery.start('', {'offset': 24});
+      limit.should.equal(0);
+      offset.should.equal(24);
+    });
   });
 
-  it('should not be able to trigger batch action when batch is included in allowed operators but params has no limit or offset', () => {
-    let callCount      = 0;
-    let actionProvider = {
-      'doBatch': () => {
-        callCount += 1;
-      },
-      'execute': () => {}
-    };
+  describe('sort', () => {
+    it('should not be able to extract sort fields from request url params when sort is not included in allowed operators even when present', () => {
+      let isAsc          = false;
+      let field          = '';
+      let actionProvider = {
+        'doSort': (bq, isAscParam, fieldParam) => {
+          isAsc = isAscParam;
+          field = fieldParam;
+        },
+        'execute': () => {}
+      };
 
-    apiQuery.setAllowedOperators([apiQuery.optr.BATCH]);
-    apiQuery.setActionProvider(actionProvider);
-    apiQuery.start('', {});
-    callCount.should.equal(0);
-  });
+      apiQuery.setAllowedOperators([]);
+      apiQuery.setActionProvider(actionProvider);
+      apiQuery.start('', {'sort': '-dummy.field'});
+      isAsc.should.equal(false);
+      field.should.equal('');
+    });
 
-  it('should be able to extract limits and offset from request url params when batch is included in allowed operators when present', () => {
-    let limit          = 0;
-    let offset         = 0;
-    let actionProvider = {
-      'doBatch': (bq, offsetParam, limitParam) => {
-        limit  = limitParam;
-        offset = offsetParam;
-      },
-      'execute': () => {}
-    };
+    it('should not be able to trigger sort check when sort is included in allowed operators but params has no sort field', () => {
+      let callCount      = 0;
+      let actionProvider = {
+        'doSort': () => {
+          callCount += 1;
+        },
+        'execute': () => {}
+      };
 
-    apiQuery.setAllowedOperators([apiQuery.optr.BATCH]);
-    apiQuery.setActionProvider(actionProvider);
-    apiQuery.start('', {'limit': 25, 'offset': 24});
-    limit.should.equal(25);
-    offset.should.equal(24);
-  });
+      apiQuery.setAllowedOperators([apiQuery.optr.SORT]);
+      apiQuery.setActionProvider(actionProvider);
+      apiQuery.start('', {});
+      callCount.should.equal(0);
+    });
 
-  it('should be able to extract limits from request url params and provide default value to offset', () => {
-    let limit          = 0;
-    let offset         = 24;
-    let actionProvider = {
-      'doBatch': (bq, offsetParam, limitParam) => {
-        limit  = limitParam;
-        offset = offsetParam;
-      },
-      'execute': () => {}
-    };
+    it('should be able to extract sort info from request url params when sort is included in allowed operators when present', () => {
+      let isAsc          = false;
+      let field          = '';
+      let actionProvider = {
+        'doSort': (bq, isAscParam, fieldParam) => {
+          isAsc = isAscParam;
+          field = fieldParam;
+        },
+        'execute': () => {}
+      };
 
-    apiQuery.setAllowedOperators([apiQuery.optr.BATCH]);
-    apiQuery.setActionProvider(actionProvider);
-    apiQuery.start('', {'limit': 25});
-    limit.should.equal(25);
-    offset.should.equal(0);
-  });
-
-  it('should be able to extract offset from request url params and provide default value to limit', () => {
-    let limit          = 25;
-    let offset         = 0;
-    let actionProvider = {
-      'doBatch': (bq, offsetParam, limitParam) => {
-        limit  = limitParam;
-        offset = offsetParam;
-      },
-      'execute': () => {}
-    };
-
-    apiQuery.setAllowedOperators([apiQuery.optr.BATCH]);
-    apiQuery.setActionProvider(actionProvider);
-    apiQuery.start('', {'offset': 24});
-    limit.should.equal(0);
-    offset.should.equal(24);
+      apiQuery.setAllowedOperators([apiQuery.optr.SORT]);
+      apiQuery.setActionProvider(actionProvider);
+      apiQuery.start('', {'sort': '+dummy.field'});
+      isAsc.should.equal(true);
+      field.should.equal('dummy.field');
+    });
   });
 });

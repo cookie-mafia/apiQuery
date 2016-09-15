@@ -51,10 +51,6 @@ function preFilter(baseQuery) {
   return baseQuery;
 }
 
-function preSort(baseQuery) {
-  return baseQuery;
-}
-
 function getValue(base, attrib, def) {
   return base[attrib] || def;
 }
@@ -64,7 +60,7 @@ function preBatch(pack) {
   const offsetTxt = 'offset';
 
   function checkIfKeyIsPresent(key) {
-    return key in pack.reqUrlParams;
+    return key in pack.reqUrlParams && pack.reqUrlParams[key] && Number.isInteger(pack.reqUrlParams[key]);
   }
 
   function performBatch() {
@@ -77,6 +73,38 @@ function preBatch(pack) {
   }
 
   [limitTxt, offsetTxt].filter(checkIfKeyIsPresent).some(performBatch);
+  return pack;
+}
+
+function preSort(pack) {
+  const sortText  = 'sort';
+  const delimiter = ',';
+  const asc       = '+';
+  const desc      = '-';
+
+  function checkIfKeyIsPresent(key) {
+    return key in pack.reqUrlParams && pack.reqUrlParams[key];
+  }
+
+  function checkSortString(sortString) {
+    return [asc,desc].indexOf(sortString[0]) > -1 && sortString.length > 1;
+  }
+
+  function performIndividualSort(prev, singleSortString) {
+    prev.baseQuery = prev.actions.doSort(prev.baseQuery, singleSortString[0] === asc, singleSortString.substring(1));
+    return prev;
+  }
+
+  function performSort() {
+    pack.baseQuery = pack
+      .reqUrlParams[sortText]
+      .split(delimiter)
+      .filter(checkSortString)
+      .reduce(performIndividualSort, pack).baseQuery;
+    return true;
+  }
+
+  [sortText].filter(checkIfKeyIsPresent).some(performSort);
   return pack;
 }
 
