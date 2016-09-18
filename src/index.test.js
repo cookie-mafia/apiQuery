@@ -188,19 +188,78 @@ describe('actions', () => {
     it('should be able to extract sort info from request url params when sort is included in allowed operators when present', () => {
       let isAsc          = false;
       let field          = '';
+      let callCount      = 0;
       let actionProvider = {
         'doSort': (bq, isAscParam, fieldParam) => {
           isAsc = isAscParam;
           field = fieldParam;
+
+          callCount += 1;
         },
         'execute': () => {}
       };
 
       apiQuery.setAllowedOperators([apiQuery.optr.SORT]);
       apiQuery.setActionProvider(actionProvider);
-      apiQuery.start('', {'sort': '+dummy.field'});
+      apiQuery.start('', {'sort': '-dummyfield,+dummy.field'});
       isAsc.should.equal(true);
       field.should.equal('dummy.field');
+    });
+  });
+
+  describe('filter', () => {
+    it('should not be able to extract filter fields from request url params when filter is not included in allowed operators even when present', () => {
+      let field          = '';
+      let value          = '';
+      let actionProvider = {
+        'doFilter': (bq, fieldParam, valueParam) => {
+          field = fieldParam;
+          value = valueParam;
+        },
+        'execute': () => {}
+      };
+
+      apiQuery.setAllowedOperators([]);
+      apiQuery.setActionProvider(actionProvider);
+      apiQuery.start('', {'fltr_field': 'data'});
+      field.should.equal('');
+      value.should.equal('');
+    });
+
+    it('should not be able to trigger filter check when filter is included in allowed operators but params has no filter field', () => {
+      let callCount      = 0;
+      let actionProvider = {
+        'doFilter': () => {
+          callCount += 1;
+        },
+        'execute': () => {}
+      };
+
+      apiQuery.setAllowedOperators([apiQuery.optr.FILTER]);
+      apiQuery.setActionProvider(actionProvider);
+      apiQuery.start('', {});
+      callCount.should.equal(0);
+    });
+
+    it('should be able to extract filter info from request url params when filter is included in allowed operators when present', () => {
+      let field          = '';
+      let value          = '';
+      let callCount      = 0;
+      let actionProvider = {
+        'doFilter': (bq, fieldParam, valueParam) => {
+          field = fieldParam;
+          value = valueParam;
+
+          callCount += 1;
+        },
+        'execute': () => {}
+      };
+
+      apiQuery.setAllowedOperators([apiQuery.optr.FILTER]);
+      apiQuery.setActionProvider(actionProvider);
+      apiQuery.start('', {'fltr_field': 'data'});
+      field.should.equal('field');
+      value.should.equal('data');
     });
   });
 });

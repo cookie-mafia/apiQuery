@@ -47,10 +47,6 @@ function start(baseQuery, reqUrlParams, options) {
   return actions.execute();
 }
 
-function preFilter(baseQuery) {
-  return baseQuery;
-}
-
 function getValue(base, attrib, def) {
   return base[attrib] || def;
 }
@@ -105,6 +101,22 @@ function preSort(pack) {
   }
 
   [sortText].filter(checkIfKeyIsPresent).some(performSort);
+  return pack;
+}
+
+function preFilter(pack) {
+  const filterPrefix = 'fltr_';
+
+  function filterFltr(key) {
+    return key.indexOf(filterPrefix) > -1;
+  }
+
+  function performFilter(prev, key) {
+    prev.baseQuery = prev.actions.doFilter(prev, key.replace(filterPrefix, ''), prev.reqUrlParams[ key ]);
+    return prev;
+  }
+
+  pack.baseQuery = Object.keys(pack.reqUrlParams).filter(filterFltr).reduce(performFilter, pack).baseQuery;
   return pack;
 }
 

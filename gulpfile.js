@@ -44,7 +44,7 @@ const codacyTask = () => {
   ;
 };
 
-gulp.task('codacy', ['pre-commit'], codacyTask);
+gulp.task('codacy', codacyTask);
 gulp.task('pre-test', preTest);
 gulp.task('lint', lint);
 gulp.task('test', ['pre-test'], test);
