@@ -44,7 +44,7 @@ function start(baseQuery, reqUrlParams, options) {
     actions, baseQuery, reqUrlParams
   });
 
-  return actions.execute();
+  return actions.execute(baseQuery);
 }
 
 function getValue(base, attrib, def) {
@@ -112,7 +112,7 @@ function preFilter(pack) {
   }
 
   function performFilter(prev, key) {
-    prev.baseQuery = prev.actions.doFilter(prev, key.replace(filterPrefix, ''), prev.reqUrlParams[ key ]);
+    prev.baseQuery = prev.actions.doFilter(prev.baseQuery, key.replace(filterPrefix, ''), prev.reqUrlParams[ key ]);
     return prev;
   }
 
