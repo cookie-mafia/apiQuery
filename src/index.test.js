@@ -245,6 +245,7 @@ describe('actions', () => {
       let field          = '';
       let value          = '';
       let callCount      = 0;
+      let preFilter      = {'field': 'data'};
       let actionProvider = {
         'doFilter': (bq, fieldParam, valueParam) => {
           field = fieldParam;
@@ -257,7 +258,7 @@ describe('actions', () => {
 
       apiQuery.setAllowedOperators([apiQuery.optr.FILTER]);
       apiQuery.setActionProvider(actionProvider);
-      apiQuery.start('', {'fltr_field': 'data'});
+      apiQuery.start('', {'fltr_field': 'data'}, {preFilter});
       field.should.equal('field');
       value.should.equal('data');
     });

@@ -28,25 +28,6 @@ function getAllowedOperators(options) {
     this.allowedOperators || defaultOperators;
 }
 
-function start(baseQuery, reqUrlParams, options) {
-  let actions   = this.getActionProvider(options);
-  let operators = this.getAllowedOperators(options);
-
-  function removeUnusedOptrs(optr, index) {
-    return operators.indexOf(index) > -1;
-  }
-
-  function executeEachOptr(baseQuery, optr) {
-    return optr(baseQuery);
-  }
-
-  this.operators.filter(removeUnusedOptrs).reduce(executeEachOptr, {
-    actions, baseQuery, reqUrlParams
-  });
-
-  return actions.execute(baseQuery);
-}
-
 function getValue(base, attrib, def) {
   return base[attrib] || def;
 }
@@ -120,8 +101,42 @@ function preFilter(pack) {
   return pack;
 }
 
+function wrapPreFilter(filters) {
+  function addPrefixToKey(prev, key) {
+    prev['fltr_' + key] = filters[key];
+    return prev;
+  }
+
+  return Object.keys(filters).reduce(addPrefixToKey, {});
+}
+
+function start(baseQuery, reqUrlParams, options) {
+  let actions   = this.getActionProvider(options);
+  let operators = this.getAllowedOperators(options);
+
+  function removeUnusedOptrs(optr, index) {
+    return operators.indexOf(index) > -1;
+  }
+
+  function executeEachOptr(baseQuery, optr) {
+    return optr(baseQuery);
+  }
+
+  this.operators.filter(removeUnusedOptrs).reduce(executeEachOptr, {
+    actions, baseQuery, reqUrlParams
+  });
+
+  preFilter({
+    actions,
+    baseQuery,
+    'reqUrlParams': wrapPreFilter(options && options.preFilter || {})
+  });
+
+  return actions.execute(baseQuery);
+}
+
 module.exports = {
-  'version': '1.0.0',
+  'version': '1.1.0',
 
   'actions': defaultActions,
   'operators': [preFilter, preSort, preBatch],

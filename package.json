@@ -1,6 +1,6 @@
 {
   "name": "api-query",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "Utility functions to pipe api query string into datasource commands",
   "main": "index.js",
   "dependencies": {},
