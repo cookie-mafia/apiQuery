@@ -8,24 +8,33 @@ const optr             = {
   'BATCH': 2
 };
 
-function setActionProvider(actionProvider) {
-  this.actions = actionProvider;
+function setProp(key, value) {
+  this[key] = value;
   return this;
+}
+
+function getProp(prop, options, key, def) {
+  return options && options[key] || this[prop] || def;
+}
+
+function attrib(options, key, def) {
+  return this.getProp(key, options, key, def);
+}
+
+function setActionProvider(actionProvider) {
+  return this.setProp('actions', actionProvider);
 }
 
 function setAllowedOperators(operators) {
-  this.allowedOperators = operators;
-  return this;
+  return this.setProp('allowedOperators', operators);
 }
 
 function getActionProvider(options) {
-  return options && options.actionProvider ||
-    this.actions || defaultActions;
+  return this.getProp('actions', options, 'actionProvider', defaultActions);
 }
 
 function getAllowedOperators(options) {
-  return options && options.operators ||
-    this.allowedOperators || defaultOperators;
+  return this.getProp('allowedOperators', options, 'operators', defaultOperators);
 }
 
 function getValue(base, attrib, def) {
@@ -33,8 +42,8 @@ function getValue(base, attrib, def) {
 }
 
 function preBatch(pack) {
-  const limitTxt  = 'limit';
-  const offsetTxt = 'offset';
+  const limitKey  = pack.baseUtil.attrib(pack.options, 'limitKey', 'limit');
+  const offsetKey = pack.baseUtil.attrib(pack.options, 'offsetKey', 'offset');
 
   function checkIfKeyIsPresent(key) {
     return key in pack.reqUrlParams && pack.reqUrlParams[key] && Number.isInteger(pack.reqUrlParams[key]);
@@ -43,50 +52,50 @@ function preBatch(pack) {
   function performBatch() {
     pack.baseQuery = pack.actions.doBatch(
       pack.baseQuery,
-      getValue(pack.reqUrlParams, offsetTxt, 0),
-      getValue(pack.reqUrlParams, limitTxt, 0)
+      getValue(pack.reqUrlParams, offsetKey, 0),
+      getValue(pack.reqUrlParams, limitKey, 0)
     );
     return true;
   }
 
-  [limitTxt, offsetTxt].filter(checkIfKeyIsPresent).some(performBatch);
+  [limitKey, offsetKey].filter(checkIfKeyIsPresent).some(performBatch);
   return pack;
 }
 
 function preSort(pack) {
-  const sortText  = 'sort';
-  const delimiter = ',';
-  const asc       = '+';
-  const desc      = '-';
+  const sortKey       = pack.baseUtil.attrib(pack.options, 'sortKey', 'sort');
+  const sortDelimiter = pack.baseUtil.attrib(pack.options, 'sortDelimiter', ',');
+  const sortAscKey    = pack.baseUtil.attrib(pack.options, 'sortAscKey', '+');
+  const sortDescKey   = pack.baseUtil.attrib(pack.options, 'sortAscKey', '-');
 
   function checkIfKeyIsPresent(key) {
     return key in pack.reqUrlParams && pack.reqUrlParams[key];
   }
 
   function checkSortString(sortString) {
-    return [asc,desc].indexOf(sortString[0]) > -1 && sortString.length > 1;
+    return [sortAscKey, sortDescKey].indexOf(sortString[0]) > -1 && sortString.length > 1;
   }
 
   function performIndividualSort(prev, singleSortString) {
-    prev.baseQuery = prev.actions.doSort(prev.baseQuery, singleSortString[0] === asc, singleSortString.substring(1));
+    prev.baseQuery = prev.actions.doSort(prev.baseQuery, singleSortString[0] === sortAscKey, singleSortString.substring(1));
     return prev;
   }
 
   function performSort() {
     pack.baseQuery = pack
-      .reqUrlParams[sortText]
-      .split(delimiter)
+      .reqUrlParams[sortKey]
+      .split(sortDelimiter)
       .filter(checkSortString)
       .reduce(performIndividualSort, pack).baseQuery;
     return true;
   }
 
-  [sortText].filter(checkIfKeyIsPresent).some(performSort);
+  [sortKey].filter(checkIfKeyIsPresent).some(performSort);
   return pack;
 }
 
 function preFilter(pack) {
-  const filterPrefix = 'fltr_';
+  const filterPrefix = pack.baseUtil.attrib(pack.options, 'filterPrefix', 'fltr_');
 
   function filterFltr(key) {
     return key.indexOf(filterPrefix) > -1;
@@ -101,9 +110,9 @@ function preFilter(pack) {
   return pack;
 }
 
-function wrapPreFilter(filters) {
+function wrapPreFilter(filters, filterPrefix) {
   function addPrefixToKey(prev, key) {
-    prev['fltr_' + key] = filters[key];
+    prev[filterPrefix + key] = filters[key];
     return prev;
   }
 
@@ -113,6 +122,7 @@ function wrapPreFilter(filters) {
 function start(baseQuery, reqUrlParams, options) {
   let actions   = this.getActionProvider(options);
   let operators = this.getAllowedOperators(options);
+  let baseUtil  = this;
 
   function removeUnusedOptrs(optr, index) {
     return operators.indexOf(index) > -1;
@@ -123,20 +133,22 @@ function start(baseQuery, reqUrlParams, options) {
   }
 
   this.operators.filter(removeUnusedOptrs).reduce(executeEachOptr, {
-    actions, baseQuery, reqUrlParams
+    actions, baseQuery, reqUrlParams, options, baseUtil
   });
 
   preFilter({
-    actions,
-    baseQuery,
-    'reqUrlParams': wrapPreFilter(options && options.preFilter || {})
+    actions, baseQuery, options, baseUtil,
+    'reqUrlParams': wrapPreFilter(
+      options && options.preFilter || {},
+      this.attrib(options, 'filterPrefix', 'fltr_')
+    )
   });
 
   return actions.execute(baseQuery);
 }
 
 module.exports = {
-  'version': '1.1.0',
+  'version': '1.1.1',
 
   'actions': defaultActions,
   'operators': [preFilter, preSort, preBatch],
@@ -147,5 +159,9 @@ module.exports = {
   setAllowedOperators,
   getActionProvider,
   getAllowedOperators,
-  start
+  start,
+
+  setProp,
+  getProp,
+  attrib
 };
