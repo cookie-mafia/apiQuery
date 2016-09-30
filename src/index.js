@@ -1,11 +1,12 @@
 'use strict';
 
 const defaultActions   = require('./defaultActionProvider.js');
-const defaultOperators = [0, 1, 2];
+const defaultOperators = [0, 1, 2, 3];
 const optr             = {
   'FILTER': 0,
   'SORT': 1,
-  'BATCH': 2
+  'BATCH': 2,
+  'FIELD': 3
 };
 
 function setProp(key, value) {
@@ -94,6 +95,31 @@ function preSort(pack) {
   return pack;
 }
 
+function preField(pack) {
+  const fieldKey       = pack.baseUtil.attrib(pack.options, 'fieldKey', 'field');
+  const fieldDelimiter = pack.baseUtil.attrib(pack.options, 'fieldDelimiter', ',');
+
+  function checkIfKeyIsPresent(key) {
+    return key in pack.reqUrlParams && pack.reqUrlParams[key];
+  }
+
+  function performIndividualField(prev, singleFieldString) {
+    prev.baseQuery = prev.actions.doField(prev.baseQuery, singleFieldString);
+    return prev;
+  }
+
+  function performField() {
+    pack.baseQuery = pack
+      .reqUrlParams[fieldKey]
+      .split(fieldDelimiter)
+      .reduce(performIndividualField, pack).baseQuery;
+    return true;
+  }
+
+  [fieldKey].filter(checkIfKeyIsPresent).some(performField);
+  return pack;
+}
+
 function preFilter(pack) {
   const filterPrefix = pack.baseUtil.attrib(pack.options, 'filterPrefix', 'fltr_');
 
@@ -148,10 +174,10 @@ function start(baseQuery, reqUrlParams, options) {
 }
 
 module.exports = {
-  'version': '1.1.1',
+  'version': '1.2.0',
 
   'actions': defaultActions,
-  'operators': [preFilter, preSort, preBatch],
+  'operators': [preFilter, preSort, preBatch, preField],
   'allowedOperators': defaultOperators,
 
   optr,

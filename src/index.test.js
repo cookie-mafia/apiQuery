@@ -263,4 +263,54 @@ describe('actions', () => {
       value.should.equal('data');
     });
   });
+
+  describe('field', () => {
+    it('should not be able to extract group fields from request url params when group is not included in allowed operators even when present', () => {
+      let field          = '';
+      let actionProvider = {
+        'doField': (bq, fieldParam) => {
+          field = fieldParam;
+        },
+        'execute': () => {}
+      };
+
+      apiQuery.setAllowedOperators([]);
+      apiQuery.setActionProvider(actionProvider);
+      apiQuery.start('', {'field': 'dummy.field'});
+      field.should.equal('');
+    });
+
+    it('should not be able to trigger group check when group is included in allowed operators but params has no group field', () => {
+      let callCount      = 0;
+      let actionProvider = {
+        'doField': () => {
+          callCount += 1;
+        },
+        'execute': () => {}
+      };
+
+      apiQuery.setAllowedOperators([apiQuery.optr.FIELD]);
+      apiQuery.setActionProvider(actionProvider);
+      apiQuery.start('', {});
+      callCount.should.equal(0);
+    });
+
+    it('should be able to extract group info from request url params when group is included in allowed operators when present', () => {
+      let field          = '';
+      let callCount      = 0;
+      let actionProvider = {
+        'doField': (bq, fieldParam) => {
+          field = fieldParam;
+
+          callCount += 1;
+        },
+        'execute': () => {}
+      };
+
+      apiQuery.setAllowedOperators([apiQuery.optr.FIELD]);
+      apiQuery.setActionProvider(actionProvider);
+      apiQuery.start('', {'field': 'dummyfield,dummy.field'});
+      field.should.equal('dummy.field');
+    });
+  });
 });
