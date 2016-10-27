@@ -56,3 +56,39 @@ let results = apiQuery.start( packData, apiQueryParameters, config );
 * **config :** object used to control the utility
 
 #### Using query parameters
+
+##### Filtering
+```shell
+# Single filter
+http://api/route?fltr_field1=value1
+
+# multiple filter
+http://api/route?fltr_field1=value1&fltr_field2=value2
+```
+
+##### Paging
+```shell
+http://api/route?limit=3&offset=2
+```
+
+
+##### Sorting
+```shell
+# single field ascending
+http://api/route?sort=+field1
+
+# single field descending
+http://api/route?sort=-field1
+
+# multiple field descending
+http://api/route?sort=+field1,-field2 
+```
+
+##### Filtering + Distinct
+```shell
+# single field distinct
+http://api/route?field=field1
+
+# multipl field distinct
+http://api/route?field=field1,field2
+```
